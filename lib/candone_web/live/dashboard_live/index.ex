@@ -139,7 +139,7 @@ defmodule CandoneWeb.DashboardLive.Index do
 
     notes = Projects.get_project_notes(project)
 
-    sprint_cost = Enum.reduce(sprint_tasks, 0, fn task, acc -> acc + task.cost end)
+    sprint_cost = update_sprint_cost(sprint_tasks)
 
     socket
     |> assign(:current_project_id, id)
@@ -149,6 +149,10 @@ defmodule CandoneWeb.DashboardLive.Index do
     |> assign(:notes, notes)
     |> assign(:page_title, "Candone: #{project.name}")
     |> assign(:sprint_cost, sprint_cost)
+  end
+
+  defp update_sprint_cost(tasks) do
+    Enum.reduce(tasks, 0, fn task, acc -> acc + task.cost end)
   end
 
   @impl true
@@ -203,14 +207,18 @@ defmodule CandoneWeb.DashboardLive.Index do
 
   # Drag and Drop
   def handle_event("reposition", %{"item" => id, "new" => new, "old" => old}, socket) when new != old do
-    IO.inspect("=====> handle_event(resposition) <=======")
-    IO.inspect(id)
     update_task_stage(id, new)
-    {:noreply, socket}
+
+
+    project = Projects.get_project!(socket.assigns.current_project_id)
+    sprint_tasks = Projects.get_project_tasks_with_stage(project, 1)
+
+    {:noreply, socket
+               |> assign(:sprint_cost, update_sprint_cost(sprint_tasks))
+              }
   end
 
   def handle_event("reposition", _, socket) do
-    IO.inspect("=====> handle_event(resposition) - empty <=======")
     {:noreply, socket}
   end
 
@@ -317,7 +325,6 @@ defmodule CandoneWeb.DashboardLive.Index do
       "done-list" -> 2
       _ -> 0
     end
-
     Tasks.update_task_stage(task, stage)
   end
 
