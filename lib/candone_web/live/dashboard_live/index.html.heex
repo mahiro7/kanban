@@ -1,0 +1,238 @@
+<div class="px-12">
+  <%= if @delete_card do %>
+    <.modal
+      title={"Delete"}
+    >
+      <.confirm_delete
+          item={@delete_card}
+      />
+    </.modal>
+  <% end %>
+
+  <%= if @live_action in [:new_project] do %>
+    <.modal
+      return_to={~p"/dashboard/projects/#{@current_project_id}"}
+      title={@page_title}
+      id="new_project_modal"
+    >
+      <.live_component
+        module={CandoneWeb.ProjectLive.FormComponent}
+        id={@project.id || :new}
+        title={@page_title}
+        action={@live_action}
+        project={@project}
+        patch={~p"/dashboard/projects/#{@current_project_id}"}
+      />
+    </.modal>
+  <% end %>
+
+  <%= if @live_action in [:new_task, :edit_task] do %>
+    <.modal
+      return_to={~p"/dashboard/projects/#{@current_project_id}"}
+      title={@page_title}
+      id={@task.id || :new}
+    >
+      <.live_component
+        module={CandoneWeb.TaskLive.FormComponent}
+        id={@task.id || :new}
+        title={@page_title}
+        action={@live_action}
+        task={@task}
+        people={@people}
+        project_id={@current_project_id}
+        return_to={~p"/dashboard/projects/#{@current_project_id}"}
+      />
+
+    </.modal>
+  <% end %>
+
+  <%= if @live_action in [:new_note, :edit_note] do %>
+  <.modal
+      return_to={~p"/dashboard/projects/#{@current_project_id}"}
+      title={@page_title}
+  >
+    <.live_component
+      module={CandoneWeb.NoteLive.FormComponent}
+      id={@note.id || :new}
+      title={@page_title}
+      action={@live_action}
+      note={@note}
+      people={@people}
+      project_id={@current_project_id}
+      return_to={~p"/dashboard/projects/#{@current_project_id}"}
+    />
+  </.modal>
+<% end %>
+  <ul class="list-disc list-decimal list-inside py-4 leading-7 text-blue-600 visited:text-purple-600"></ul>
+
+  <div class="min-h-full flex flex-row flex-wrap items-stratch">
+
+    <!-- Projects -->
+    <div class="grow basis-1/6 mr-4">
+      <div class="font-medium py-1 text-lg">
+        Projects
+      </div>
+      <div class="py-4">
+        <.add_project_button
+          to={~p"/dashboard/projects/new"}
+        />
+      </div>
+      <div class="rounded-lg bg-white pr-4 py-0.5 min-h-full mt-[3.25rem]">
+        <%= for project <- @projects do %>
+            <.project_card
+              name={project.name}
+              date={project.inserted_at}
+              tasks={project.task_count}
+              notes={project.note_count}
+              type="projects"
+              value={"#{project.id}"}
+              selected={"#{project.id}" == "#{@current_project_id}"}
+            />
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="grow basis-3/6 mr-4">
+      <div class="flex flex-row">
+          <.dropdown_menu_custom title="Tasks">
+            <.dropdown_menu_item click="hide-done">
+              <%= if @hide_done do %>
+                <.show_icon />
+                Show done tasks
+              <% else %>
+                <.hide_icon />
+                Hide done tasks
+              <% end %>
+
+            </.dropdown_menu_item>
+            <.dropdown_menu_item click="sort-date">
+              <.calendar_icon checked={@sorting == :date} />
+              Sort by date
+            </.dropdown_menu_item>
+            <.dropdown_menu_item click="sort-cost">
+              <.cog_icon checked={@sorting == :cost} />
+              Sort by cost
+            </.dropdown_menu_item>
+            <.dropdown_menu_item click="sort-urgency">
+              <.exclamation_icon  checked={@sorting == :urgency} />
+              Sort by urgency
+            </.dropdown_menu_item>
+          </.dropdown_menu_custom>
+      </div>
+
+      <div class="py-4">
+        <.add_task_button
+          to={~p"/dashboard/tasks/new"}
+        />
+      </div>
+      <div class={"grid #{if @hide_done, do: "grid-cols-2", else: "grid-cols-3"}"}>
+        <div class="py-4 mx-1 flex flex-col">
+          <div class="mb-2 text-base font-md">Backlog</div>
+          <div 
+            id="backlog-list"
+            class="rounded-lg px-4 py-0.5 min-h-full bg-gray-100"
+            phx-update="stream"
+            phx-hook="Sortable"
+          >
+            <%= for {_, task} <- @streams.tasks_backlog do %>
+              <.card
+                  name={task.name}
+                  description={task.description}
+                  date={task.inserted_at}
+                  counter1={task.people_count}
+                  counter2 = {task.cost}
+                  click="task-select"
+                  type="tasks_backlog"
+                  value={task.id}
+                  selected={false}
+                  colour={get_colour_from_urgency(task.urgency)}
+                />
+            <% end %>
+          </div>
+        </div>
+        <div class="py-4 mx-1 flex flex-col ">
+          <div class="mb-2 text-base font-md">Sprint | Cost: <%= @sprint_cost %></div>
+            <div
+              id="sprint-list"
+              class="rounded-lg px-4 py-0.5 min-h-full bg-gray-100"
+              phx-update="stream"
+              phx-hook="Sortable"
+            >
+              <%= for {_, task} <- @streams.tasks_sprint do %>
+              <.card
+                  name={task.name}
+                  description={task.description}
+                  date={task.inserted_at}
+                  counter1={task.people_count}
+                  counter2 = {task.cost}
+                  click="task-select"
+                  type="tasks_sprint"
+                  value={task.id}
+                  selected={false}
+                  colour={get_colour_from_urgency(task.urgency)}
+                />
+            <% end %>
+            </div>  
+
+        </div>
+        <%= if !@hide_done do %>
+          <div class={"py-4 mx-1 flex flex-col"}>
+            <div class="mb-2 text-base font-md">Done</div>
+            <div 
+              id="done-list"
+              class="rounded-lg px-4 py-0.5 min-h-full bg-gray-100"
+              phx-update="stream"
+              phx-hook="Sortable"
+            >
+              <%= for {_, task} <- @streams.tasks_done do %>
+                <.card
+
+                  name={task.name}
+                  description={task.description}
+                  date={task.inserted_at}
+                  counter1={task.people_count}
+                  counter2 = {task.cost}
+                  click="task-select"
+                  type="tasks_done"
+                  value={task.id}
+                  selected={false}
+                  colour={get_colour_from_urgency(task.urgency)}
+                />
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="grow">
+    <div class="font-medium py-1 text-lg">
+        Notes
+      </div>
+      <div class="py-4">
+        <.add_note_button
+          to={~p"/dashboard/notes/new"}
+        />
+      </div>
+      <div class="rounded-lg bg-gray-100 px-4 py-0.5 min-h-full mt-[3.25rem]">
+        <%= for note <- @notes do %>
+          <.card
+            name={note.name}
+            description=""
+            date={note.inserted_at}
+            counter1={note.people_count}
+            counter2="0"
+            click="note-select"
+            type="note"
+            value={note.id}
+            selected={false}
+            colour="bg-primary2-100"
+          />
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+</div>

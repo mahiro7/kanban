@@ -1,0 +1,35 @@
+<div>
+      <.header>
+        <:subtitle>Use this form to manage person records in your database.</:subtitle>
+      </.header>
+
+      <.simple_form
+        for={@form}
+        id="person-form"
+        phx-target={@myself}
+        phx-change="validate"
+        phx-submit="save"
+      >
+        <.input field={@form[:first_name]} type="text" label="First name" />
+        <.input field={@form[:last_name]} type="text" label="Last name" />
+        <.input field={@form[:middle_name]} type="text" label="Middle name" />
+        <.input field={@form[:description]} type="textarea" label="Description" />
+
+        <div class="mb-4">
+          <.label id="listbox-label" class="block text-sm font-medium text-gray-700">
+            Company
+          </.label>
+
+          <.live_component module={SelectComponent}
+            id="companies-1"
+            options={@companies}
+            f={@form}
+            name={:company_id}
+          />
+        </div>
+
+        <:actions>
+          <.button phx-disable-with="Saving...">Save Person</.button>
+        </:actions>
+      </.simple_form>
+    </div>

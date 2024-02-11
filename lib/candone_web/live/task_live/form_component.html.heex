@@ -1,0 +1,60 @@
+<div>
+  <.simple_form
+      for={@form}
+      id="task-form"
+      phx-target={@myself}
+      phx-change="validate"
+      phx-submit="save"
+  >
+    <.input type="text" field={@form[:name]} label="Name" />
+    <.input type="textarea" field={@form[:description]} label="Description" />
+    <.input type="number" field={@form[:cost]} label="Cost" />
+
+    <div class="mb-4">
+      <.label>
+        Urgency
+      </.label>
+      <div class="flex justify-start">
+        <.radio_button f={@form} name={:urgency} value="0" label="None" />
+        <.radio_button f={@form} name={:urgency} value="1" label="Low" />
+        <.radio_button f={@form} name={:urgency} value="2" label="Medium" />
+        <.radio_button f={@form} name={:urgency} value="3" label="High" />
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <.label id="listbox-label">
+        People
+      </.label>
+      <.live_component module={SelectManyComponent}
+        id="people-1"
+        options={@people}
+        f={@form}
+        name={:people}
+      />
+    </div>
+
+    <%= if @action != :new && @action != :new_task do %>
+      <div class="mb-4">
+        <.label>
+          Stage
+        </.label>
+        
+        <div class="flex justify-start">
+          <.radio_button f={@form} name={:stage} value="0" label="Backlog" />
+          <.radio_button f={@form} name={:stage} value="1" label="In Sprint" />
+          <.radio_button f={@form} name={:stage} value="2" label="Done" />
+        </div>
+      </div>
+    <% end %>
+
+    <:actions>
+      <div class="flex flex-row-reverse gap-6">
+        <.cancel_button return_to={@return_to}/>
+        <.button phx-disable-with="Saving...">
+          Save
+        </.button>
+      </div>  
+    </:actions>
+  </.simple_form>  
+</div>

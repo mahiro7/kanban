@@ -1,0 +1,51 @@
+
+@layer components {
+    .ul-items {
+      @apply list-disc list-inside
+    }
+  }
+  
+  /* colours */
+  .bg-primary-100 {
+    background-color: #B5BFC9;
+  }
+  
+  .bg-red-100 {
+    background-color: #FED2BF;
+  }
+  
+  .bg-green-200 {
+    background-color: #77D4B8;
+  }
+  
+  .bg-yellow-200 {
+    background-color: #FFB861;
+  }
+  
+  .bg-yellow-100 {
+    background-color: #F5CD62;
+  }
+  
+  .bg-gray-100 {
+    background-color: #F3F5F6;
+  }
+  
+  .border-gray-100 {
+    border-color: #F3F5F6;
+  }
+  
+  .border-primary-200 {
+    border-color: #B5BFC9;
+  }
+  
+  .text-primary-200 {
+    color: #778493;
+  }
+  
+  .text-gray-100 {
+    color: #F3F5F6;
+  }
+  
+  .text-red-200 {
+    color: #E78B63;
+  }
