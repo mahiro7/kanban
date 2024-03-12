@@ -37,11 +37,16 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
 
-  @impl true
-  def mount(_params, _session, socket) do
-    projects = Candone.Projects.list_projects()
 
+  @impl true
+  def mount(params, _session, socket) do
+    projects = Candone.Projects.list_projects()
     current_project_id = get_project_id(projects)
+    #current_project_id = if Enum.empty?(params) do
+    #  get_project_id(projects)
+    #else
+    #  Map.get(params, "id")
+    #end
 
     {:ok, socket
           |> assign(:title, "Dashboard")
@@ -51,16 +56,20 @@ defmodule CandoneWeb.DashboardLive.Index do
           |> assign(:sorting, :date)
           |> assign(:hide_done, false)
           |> assign(:delete_card, nil)
-          |> set_project(current_project_id)
+          |> set_project(:none)
     }
   end
 
+
   @impl true
   def handle_params(params, _url, socket) do
+    IO.inspect("======> apply_action(_url) <======")
+    IO.inspect(socket.assigns.live_action)
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
 
   defp apply_action(socket, :new_project, _params) do
+    IO.inspect("======> apply_action(:new_project) <======")
     socket
     |> assign(:page_title, "New Project")
     |> assign(:project, %Project{})
@@ -74,6 +83,7 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   defp apply_action(socket, :edit_task, %{"id" => id}) do
+    IO.inspect("======> apply_action(:edit_task) <======")
     task = Candone.Tasks.get_task!(id)
     # TODO: need to think about how to get rid of this re-mapping
     task = Map.put(task, :people, Enum.map(task.people, & "#{&1.id}"))
@@ -85,6 +95,7 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   defp apply_action(socket, :new_note, _params) do
+    IO.inspect("======> apply_action(:new_note) <======")
     socket
     |> assign(:page_title, "New Note")
     |> assign(:note, %Note{})
@@ -92,6 +103,7 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   defp apply_action(socket, :edit_note, %{"id" => id}) do
+    IO.inspect("======> apply_action(:edit_note) <======")
     note = Candone.Notes.get_note!(id)
     # TODO: need to think about how to get rid of this re-mapping
     note = Map.put(note, :people, Enum.map(note.people, & "#{&1.id}"))
@@ -103,10 +115,15 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   defp apply_action(socket, :index, _params) do
+    projects = Candone.Projects.list_projects()
+    current_project_id = get_project_id(projects)
+
     socket
+    |> set_project(current_project_id)
   end
 
   defp apply_action(socket, :show_project, %{"id" => id}) do
+    IO.inspect("======> apply_action(:show_project) <======")
     socket
     |> set_project(id)
   end
@@ -129,8 +146,7 @@ defmodule CandoneWeb.DashboardLive.Index do
   defp set_project(socket, id) do
     project = Projects.get_project!(id)
 
-    IO.inspect("======> set_project <=======")
-    IO.inspect(project)
+    IO.inspect("======> set_project #{id} <=======")
 
     sorting = socket.assigns.sorting
     backlog_tasks = Tasks.sort_by(Projects.get_project_tasks_with_stage(project, 0), sorting)
@@ -143,9 +159,9 @@ defmodule CandoneWeb.DashboardLive.Index do
 
     socket
     |> assign(:current_project_id, id)
-    |> stream(:tasks_backlog, backlog_tasks, reset: true, at: 0 )
-    |> stream(:tasks_sprint, sprint_tasks, reset: true, at: 0)
-    |> stream(:tasks_done, done_tasks, reset: true, at: 0)
+    |> stream(:tasks_backlog, backlog_tasks, reset: true)
+    |> stream(:tasks_sprint, sprint_tasks, reset: true)
+    |> stream(:tasks_done, done_tasks, reset: true)
     |> assign(:notes, notes)
     |> assign(:page_title, "Candone: #{project.name}")
     |> assign(:sprint_cost, sprint_cost)
@@ -253,6 +269,8 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   def handle_event("project-delete", %{"id" => id}, socket) do
+    IO.inspect("======> handle_event('project-delete') <======")
+
     project = Projects.get_project!(id)
     {:ok, _} = Projects.delete_project(project)
 

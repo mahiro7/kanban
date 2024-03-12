@@ -44,7 +44,7 @@
     <% end %>
 
     <div class={"mb-4 #{if @show_markdown, do: "hidden"}"}>
-      <.input field={@form[:content]} type="textarea" label="Content" />
+      <.input field={@form[:content]} type="textarea" label="Content" rows="18"/>
     </div>
     
     <:actions>
