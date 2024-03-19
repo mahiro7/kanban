@@ -42,11 +42,6 @@ defmodule CandoneWeb.DashboardLive.Index do
   def mount(params, _session, socket) do
     projects = Candone.Projects.list_projects()
     current_project_id = get_project_id(projects)
-    #current_project_id = if Enum.empty?(params) do
-    #  get_project_id(projects)
-    #else
-    #  Map.get(params, "id")
-    #end
 
     {:ok, socket
           |> assign(:title, "Dashboard")
@@ -69,7 +64,6 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   defp apply_action(socket, :new_project, _params) do
-    IO.inspect("======> apply_action(:new_project) <======")
     socket
     |> assign(:page_title, "New Project")
     |> assign(:project, %Project{})
@@ -83,7 +77,6 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   defp apply_action(socket, :edit_task, %{"id" => id}) do
-    IO.inspect("======> apply_action(:edit_task) <======")
     task = Candone.Tasks.get_task!(id)
     # TODO: need to think about how to get rid of this re-mapping
     task = Map.put(task, :people, Enum.map(task.people, & "#{&1.id}"))
@@ -95,7 +88,6 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   defp apply_action(socket, :new_note, _params) do
-    IO.inspect("======> apply_action(:new_note) <======")
     socket
     |> assign(:page_title, "New Note")
     |> assign(:note, %Note{})
@@ -103,7 +95,6 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   defp apply_action(socket, :edit_note, %{"id" => id}) do
-    IO.inspect("======> apply_action(:edit_note) <======")
     note = Candone.Notes.get_note!(id)
     # TODO: need to think about how to get rid of this re-mapping
     note = Map.put(note, :people, Enum.map(note.people, & "#{&1.id}"))
@@ -289,8 +280,12 @@ defmodule CandoneWeb.DashboardLive.Index do
   def handle_event("hide-done", _, socket) do
     hide_done = socket.assigns.hide_done
     {:noreply, socket
-              |> assign(:hide_done, !hide_done)}
+              |> assign(:hide_done, !hide_done)
+              |> update_after_show(hide_done)
+    }
   end
+
+
 
   def handle_event("sort-urgency", _, socket) do
     project = Projects.get_project!(socket.assigns.current_project_id)
@@ -330,6 +325,17 @@ defmodule CandoneWeb.DashboardLive.Index do
               |> stream(:tasks_done, done, reset: true)
     }
   end
+
+  defp update_after_show(socket, true) do
+    project = Projects.get_project!(socket.assigns.current_project_id)
+    sorting = socket.assigns.sorting
+    done = Tasks.sort_by(Projects.get_project_tasks_with_stage(project, 2), sorting)
+
+    socket
+    |> stream(:tasks_done, done, reset: true)
+  end
+
+  defp update_after_show(socket, false), do: socket
 
   def get_colour_from_urgency(value) do
     Map.get(@urgency, value, "bg-gray-200")
