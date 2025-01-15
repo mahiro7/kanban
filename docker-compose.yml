@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: elixir_app
+    environment:
+      DATABASE_URL: "ecto://postgres:postgres@db:5432/my_app_dev"
+      MIX_ENV: "dev"
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+    command: sh -c "npm install && mix setup && mix phx.server" 
+    volumes:
+      - .:/app
+    working_dir: /app
+    restart: always
+
+  db:
+    image: postgres:14
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: my_app_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  postgres_data:

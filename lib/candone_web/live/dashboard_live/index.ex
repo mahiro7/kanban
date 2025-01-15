@@ -159,7 +159,7 @@ defmodule CandoneWeb.DashboardLive.Index do
   end
 
   defp update_sprint_cost(tasks) do
-    Enum.reduce(tasks, 0, fn task, acc -> acc + task.cost end)
+    Enum.reduce(tasks, 0, fn task, acc -> acc + (task.cost || 0) end)
   end
 
   @impl true
@@ -302,11 +302,11 @@ defmodule CandoneWeb.DashboardLive.Index do
 
   def handle_event("sort-date", _, socket) do
     project = Projects.get_project!(socket.assigns.current_project_id)
-    backlog = Tasks.sort_by(Projects.get_project_tasks_with_stage(project, 0), :date)
-    sprint = Tasks.sort_by(Projects.get_project_tasks_with_stage(project, 1), :date)
-    done = Tasks.sort_by(Projects.get_project_tasks_with_stage(project, 2), :date)
+    backlog = Tasks.sort_by(Projects.get_project_tasks_with_stage(project, 0), :urgency)
+    sprint = Tasks.sort_by(Projects.get_project_tasks_with_stage(project, 1), :urgency)
+    done = Tasks.sort_by(Projects.get_project_tasks_with_stage(project, 2), :urgency)
     {:noreply, socket
-              |> assign(:sorting, :date)
+              |> assign(:sorting, :urgency)
               |> stream(:tasks_backlog, backlog, reset: true)
               |> stream(:tasks_sprint, sprint, reset: true)
               |> stream(:tasks_done, done, reset: true)
